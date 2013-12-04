@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
+# Authors:
 # George Darling
-# 11/17/2013
+# Zack Eggleston
+# Credits to Dr. Ralph Butler
+
+# Last updated:
+# 12/03/2013
 
 # current notes. 
 # 2. local two player have seperate controls on the keyboard - need to have game know if it is localmp vs network
