@@ -8,6 +8,7 @@
 # Last updated:
 # 12/03/2013
 
+#yay!
 # current notes. 
 # 2. local two player have seperate controls on the keyboard - need to have game know if it is localmp vs network
 # 2.5 local two player has no command line args, network multi waits for 2nd player
