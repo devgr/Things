@@ -13,6 +13,9 @@
 # 2.5 local two player has no command line args, network multi waits for 2nd player
 # 3. game interface with <space> to play, scores, text etc.
 # 4. quiting does not play nice with multiplayer - that makes sense, but needs fixing.
+# 5. New code model. Everything is currently in one file, but it seems like it would be more
+# 	flexible to split things up into different files. As an example, the server could be its own module.
+#	While at it, maybe make a server class so you can just get a new server object. That seems like good programing.
 
 # Ideas:
 # sound?
@@ -413,7 +416,7 @@ if len(sys.argv) == 1: # local multiplayer
 	commT2.join()
 	serverT.join()
 	
-elif len(sys.argv) == 2:
+elif len(sys.argv) == 2: # Network multiplayer. You are the server, wait for another client to join
 	serverT = threading.Thread(target = server)
 	gameT = threading.Thread(target = game, args = (player,))
 	commT = threading.Thread(target = communication, args = (int(sys.argv[1]), 1))
@@ -426,7 +429,7 @@ elif len(sys.argv) == 2:
 	commT.join()
 	sys.exit(0)
 
-elif len(sys.argv) == 3:
+elif len(sys.argv) == 3: # player 2
 	twoplayer = True
 	gameT = threading.Thread(target = game, args = (player,))
 	commT = threading.Thread(target = communication, args = (int(sys.argv[1]), 2))
