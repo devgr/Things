@@ -10,6 +10,7 @@
 
 #yay!
 # current notes. 
+# working on this vvvvv
 # 2. local two player have seperate controls on the keyboard - need to have game know if it is localmp vs network
 # 2.5 local two player has no command line args, network multi waits for 2nd player
 # 3. game interface with <space> to play, scores, text etc.
@@ -101,7 +102,7 @@ def Receive(mysocket):
 	return msg
 
 # Server and move-making------------------------------------------------------------------------------------------------------
-def server():
+def server(portnum):
 	global twoplayer, quit, socketlist, msgdict
 	def broadcast(msg):
 		global socketlist # in theory there could be a problem here if socketlist were changed while trying to send.
@@ -215,7 +216,7 @@ def server():
 			#return {"bm" : (bposx, bposy) , "p1m" : (p1posx, p1posy) , "p2m" : (p2posx, p2posy)}
 
 	listeningSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	listeningSocket.bind(('', int(sys.argv[1]))) # Host (any?),  Use port given in command line
+	listeningSocket.bind(('', portnum)) # Host (any?),  Use port given in command line
 	listeningSocket.listen(5) # start listening for incoming connections, up to 5 of them.
 	listeningPort = listeningSocket.getsockname()[1] # get information about the socket (specifically the port number)
 	print 'Server is istening on socket: ', listeningSocket
@@ -257,7 +258,7 @@ def server():
 
 
 # Client communications-------------------------------------------------------------------------------------------------------
-def communication(portnum, player):
+def communication(portnum, player, hostname = "localhost"):
 	def fromserver(mysock, player):
 		# interthread communication to game
 		global p1move, p2move, bmove, quit
@@ -297,9 +298,9 @@ def communication(portnum, player):
 			sDprev = sendDown
 
 	sleep(.5) # in case server takes time to load?
-	print 'Starting client.'
+	print 'Starting client for player ', player
 	mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # I can haz internet socket plz?
-	mysocket.connect(("localhost",int(portnum)))  # note the tuple
+	mysocket.connect((hostname,portnum))  # note the tuple
 	mysocket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1) # no delay in sending data
 	# connect to: computer name, socket
 	# split into threads, one for sending, one for receiving from server
@@ -398,7 +399,7 @@ def game(player):
 if len(sys.argv) == 1: # local multiplayer
 	localmp = True
 	# server
-	serverT = threading.Thread(target = server)
+	serverT = threading.Thread(target = server, args = (56789,))
 	serverT.start()    
 	# player 1
 	gameT1 = threading.Thread(target = game, args = (1,))
@@ -418,9 +419,10 @@ if len(sys.argv) == 1: # local multiplayer
 	serverT.join()
 	
 elif len(sys.argv) == 2: # Network multiplayer. You are the server, wait for another client to join
-	serverT = threading.Thread(target = server)
+	serverT = threading.Thread(target = server, args = (int(sys.argv[1]),))
 	gameT = threading.Thread(target = game, args = (player,))
 	commT = threading.Thread(target = communication, args = (int(sys.argv[1]), 1))
+	# the client and the server are both here, so client just connects to localhost
 	serverT.start()
 	gameT.start()
 	commT.start()
@@ -433,7 +435,8 @@ elif len(sys.argv) == 2: # Network multiplayer. You are the server, wait for ano
 elif len(sys.argv) == 3: # player 2
 	twoplayer = True
 	gameT = threading.Thread(target = game, args = (player,))
-	commT = threading.Thread(target = communication, args = (int(sys.argv[1]), 2))
+	commT = threading.Thread(target = communication, args = (int(sys.argv[1]), 2, sys.argv[2]))
+	# specify hostname. If you are on the same computer, that would be localhost.
 	gameT.start()
 	commT.start()
 
