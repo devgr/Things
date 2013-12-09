@@ -10,7 +10,7 @@
 
 #yay!
 # current notes. 
-# working on this vvvvv
+# I think I've made good progress on 2, time for some testing.
 # 2. local two player have seperate controls on the keyboard - need to have game know if it is localmp vs network
 # 2.5 local two player has no command line args, network multi waits for 2nd player
 # 3. game interface with <space> to play, scores, text etc.
@@ -18,6 +18,9 @@
 # 5. New code model. Everything is currently in one file, but it seems like it would be more
 # 	flexible to split things up into different files. As an example, the server could be its own module.
 #	While at it, maybe make a server class so you can just get a new server object. That seems like good programing.
+#	Client really needs to be its own class. Right now I am basically simulating having two client objects by 
+#	splitting into two threads. The threads are still important, but that doesn't seem like a very flexible
+#	design.
 
 # Ideas:
 # sound?
@@ -39,6 +42,8 @@ import socket
 import Tkinter
 
 # Global variables----------------------------------------------------------------------------------------
+
+# Variables I think I need to clean up: twoplayer <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 # Constants
 canvasHeight = 480
@@ -77,7 +82,7 @@ p1move = p1Initial # coordinates that communication passes to game
 p2move = p2Initial # x, y
 bLock = threading.Lock()
 bmove = ballInitial
-localmp = False
+localmp = False # set true if no command line arguements, so a two player game on the same keyboard
 
 sUprev = False # memory for communications
 sDprev = False 
@@ -314,20 +319,16 @@ def communication(portnum, player, hostname = "localhost"):
 # Graphics and game----------------------------------------------------------------------------------------------------------
 def game(player):
 	# interthread communication about the program:
-	global twoplayer, quit
+	global twoplayer, quit, localmp
 	# global constants:
 	global canvasHeight, canvasWidth, ballSize, paddleWidth, paddleHeight
 	# interthread communication about the game:
 	global p1move, p2move
 
-	#try:
-		## If you separate the Press and Release events, you can remember when a press occurs
-	##    and continue to move that direction until the corresponding release occurs.
-	## Thus, by remembering both a Down and Right, you can move both down and right (diagonally).
-	# canvas.bind_all('<KeyPress-Up>',move) # note that key has been pressed, continue its action until it is let up
-	# canvas.bind_all('<KeyRelease-Up>',move) # this allows for multiple keys to be pressed.
-	#def move(event):
+	try:
 
+	# in local mode, player two is on the right, so they use the arrow keys
+	# in network mode, both players can use either w,s or up down
 	def UpPressed(event):
 		global Upispressed
 		UDkeyLock.acquire() #lock # question - will these locks really slow things down?
@@ -378,10 +379,16 @@ def game(player):
 	root = Tkinter.Tk()
 	canvas = Tkinter.Canvas(root,bg="white",height=canvasHeight,width=canvasWidth)
 	canvas.pack()
-	canvas.bind_all('<KeyPress-Up>',UpPressed)
-	canvas.bind_all('<KeyRelease-Up>',UpReleased)
-	canvas.bind_all('<KeyPress-Down>',DownPressed)
-	canvas.bind_all('<KeyRelease-Down>',DownReleased)
+	if (player == 2 and localmp) or not localmp: # if not local, then any keys are ok
+		canvas.bind_all('<KeyPress-Up>',UpPressed)
+		canvas.bind_all('<KeyRelease-Up>',UpReleased)
+		canvas.bind_all('<KeyPress-Down>',DownPressed)
+		canvas.bind_all('<KeyRelease-Down>',DownReleased)
+	if (player == 1 and localmp) or not localmp:
+		canvas.bind_all('<KeyPress-W>',UpPressed) # I think using the same handlers will work.
+		canvas.bind_all('<KeyRelease-W>',UpReleased)
+		canvas.bind_all('<KeyPress-S>',DownPressed)
+		canvas.bind_all('<KeyRelease-S>',DownReleased)
 
 	line = canvas.create_line(canvasWidth/2, 0, canvasWidth/2, canvasHeight, width=4, fill="gray", dash=(4, 8))
 	ball = canvas.create_oval(ballInitial[0],ballInitial[1],ballInitial[0]+ballSize,ballInitial[1]+ballSize,width=2,fill="black")
@@ -391,8 +398,8 @@ def game(player):
 	root.attributes("-topmost", True)   # raise above other windows
 	update()
 	root.mainloop()
-	#except:
-	#	print "Exception in game thread. "
+	except:
+		print "Exception in game thread. "
 	quit = True
 
 # Main function---------------------------------------------------------------------------------------------------------------
