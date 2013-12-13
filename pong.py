@@ -10,6 +10,11 @@
 
 #yay!
 # current notes. 
+# !!!!!!!!!!!! Oh man I hit a problem with local multiplayer. Remember what threads are - they have access to the same
+# global variables, but get a copy of everything else. That means there will be big problems with launching player1 in a thread
+# and player2 in another thread, but then they are working with the same global variables that need to be unique.
+# So, I think I client needs to be an object, and you get a new client object.
+# also using socket communication for a local game seems silly.
 # I think I've made good progress on 2, time for some testing.
 # 2. local two player have seperate controls on the keyboard - need to have game know if it is localmp vs network
 # 2.5 local two player has no command line args, network multi waits for 2nd player
@@ -325,7 +330,7 @@ def game(player):
 	# interthread communication about the game:
 	global p1move, p2move
 
-	try:
+	#try:
 
 	# in local mode, player two is on the right, so they use the arrow keys
 	# in network mode, both players can use either w,s or up down
@@ -373,8 +378,8 @@ def game(player):
 		# now update graphics:
 		canvas.coords(ball,bx,by,bx+ballSize,by+ballSize)
 		canvas.coords(rect1,p1x,p1y,p1x+paddleWidth,p1y+paddleHeight) # update the screen
-		if twoplayer:
-			canvas.coords(rect2,p2x,p2y,p2x+paddleWidth,p2y+paddleHeight) # update the screen
+		#if twoplayer:
+		canvas.coords(rect2,p2x,p2y,p2x+paddleWidth,p2y+paddleHeight) # update the screen
 
 	root = Tkinter.Tk()
 	canvas = Tkinter.Canvas(root,bg="white",height=canvasHeight,width=canvasWidth)
@@ -385,10 +390,10 @@ def game(player):
 		canvas.bind_all('<KeyPress-Down>',DownPressed)
 		canvas.bind_all('<KeyRelease-Down>',DownReleased)
 	if (player == 1 and localmp) or not localmp:
-		canvas.bind_all('<KeyPress-W>',UpPressed) # I think using the same handlers will work.
-		canvas.bind_all('<KeyRelease-W>',UpReleased)
-		canvas.bind_all('<KeyPress-S>',DownPressed)
-		canvas.bind_all('<KeyRelease-S>',DownReleased)
+		canvas.bind_all('<KeyPress-w>',UpPressed) # I think using the same handlers will work.
+		canvas.bind_all('<KeyRelease-w>',UpReleased)
+		canvas.bind_all('<KeyPress-s>',DownPressed)
+		canvas.bind_all('<KeyRelease-s>',DownReleased)
 
 	line = canvas.create_line(canvasWidth/2, 0, canvasWidth/2, canvasHeight, width=4, fill="gray", dash=(4, 8))
 	ball = canvas.create_oval(ballInitial[0],ballInitial[1],ballInitial[0]+ballSize,ballInitial[1]+ballSize,width=2,fill="black")
@@ -398,8 +403,8 @@ def game(player):
 	root.attributes("-topmost", True)   # raise above other windows
 	update()
 	root.mainloop()
-	except:
-		print "Exception in game thread. "
+	#except:
+	#	print "Exception in game thread. "
 	quit = True
 
 # Main function---------------------------------------------------------------------------------------------------------------
@@ -414,15 +419,15 @@ if len(sys.argv) == 1: # local multiplayer
 	gameT1.start()
 	commT1.start()
 	# player 2
-	gameT2 = threading.Thread(target = game, args = (2,))
-	commT2 = threading.Thread(target = communication, args = (56789, 2))
-	gameT2.start()
-	commT2.start()
+	# gameT2 = threading.Thread(target = game, args = (2,))
+	# commT2 = threading.Thread(target = communication, args = (56789, 2))
+	# gameT2.start()
+	# commT2.start()
 	# join
 	gameT1.join()
-	gameT2.join()
+	# gameT2.join()
 	commT1.join()
-	commT2.join()
+	# commT2.join()
 	serverT.join()
 	
 elif len(sys.argv) == 2: # Network multiplayer. You are the server, wait for another client to join
