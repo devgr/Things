@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-# Authors:
-# George Darling
-# Zack Eggleston
-# Credits to Dr. Ralph Butler
+# Copyright (C) 2013  George Darling and Zack Egleston
+# Additional credit to Dr. Ralph Butler
 
 # Last updated:
-# 12/03/2013
+# 12/21/2013
 
 #yay!
 # current notes. 
